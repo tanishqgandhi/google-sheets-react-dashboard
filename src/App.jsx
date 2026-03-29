@@ -4,7 +4,7 @@ import DashboardHeader from './components/DashboardHeader';
 import DataTable from './components/DataTable';
 import InfoPanel from './components/InfoPanel';
 import KpiCard from './components/KpiCard';
-import { API_URL, FALLBACK_API_URL, REFRESH_INTERVAL_MS } from './config/api';
+import { API_URL, REFRESH_INTERVAL_MS } from './config/api';
 import {
   calculateMetrics,
   DEMO_ROWS,
@@ -32,41 +32,30 @@ function App() {
     }
 
     try {
-      const endpoints = [API_URL, FALLBACK_API_URL];
-      let lastFailure = '';
+      // Secure version:
+      // The browser calls our own serverless endpoint.
+      // That serverless function reads the private Google Sheet.
+      const response = await fetch(API_URL);
 
-      for (const endpoint of endpoints) {
-        try {
-          // The app reads data directly from OpenSheet.
-          // OpenSheet reads the public Google Sheet and returns JSON.
-          const response = await fetch(endpoint);
-
-          if (!response.ok) {
-            throw new Error(`Request failed with status ${response.status}`);
-          }
-
-          const json = await response.json();
-          const normalized = normalizeRows(json);
-
-          setRows(normalized);
-          setError('');
-          setIsConnected(true);
-          setLastUpdated(new Date());
-          setActiveApiUrl(endpoint);
-          setUsingDemoData(false);
-          return;
-        } catch (endpointError) {
-          lastFailure = `${endpoint} -> ${endpointError.message}`;
-        }
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
       }
 
-      throw new Error(lastFailure);
+      const json = await response.json();
+      const normalized = normalizeRows(json);
+
+      setRows(normalized);
+      setError('');
+      setIsConnected(true);
+      setLastUpdated(new Date());
+      setActiveApiUrl(API_URL);
+      setUsingDemoData(false);
     } catch (fetchError) {
       // Temporary fallback so the dashboard still demonstrates the full UI
-      // until the Google Sheet becomes readable through OpenSheet.
+      // until the secure Google Sheets function becomes reachable.
       setRows(normalizeRows(DEMO_ROWS));
       setError(
-        'Live Google Sheet data is not reachable yet, so demo data is being shown. Make sure the first row has headers, the sheet has data rows, and sharing is set to "Anyone with the link can view".'
+        'Secure Google Sheet data is not reachable yet, so demo data is being shown. Configure the Netlify environment variables and share the private sheet with your Google service account email.'
       );
       setIsConnected(false);
       setLastUpdated(new Date());
@@ -120,11 +109,10 @@ function App() {
             <p className="eyebrow">Error</p>
             <h2>Connection failed</h2>
             <p>{error}</p>
-            <p>Primary API: {API_URL}</p>
-            <p>Fallback API: {FALLBACK_API_URL}</p>
+            <p>Secure API: {API_URL}</p>
             <p>
-              In Google Sheets, add headers in row 1 like Name, Department,
-              Sales, Revenue, Date, Region and then add data rows under them.
+              Set Netlify environment variables for the service account and
+              spreadsheet details, then redeploy the site.
             </p>
           </section>
         ) : usingDemoData ? (
@@ -133,8 +121,7 @@ function App() {
               <p className="eyebrow">Demo Mode</p>
               <h2>Showing sample dashboard data</h2>
               <p>{error}</p>
-              <p>Primary API: {API_URL}</p>
-              <p>Fallback API: {FALLBACK_API_URL}</p>
+              <p>Secure API: {API_URL}</p>
             </section>
 
             <section className="kpi-grid">
