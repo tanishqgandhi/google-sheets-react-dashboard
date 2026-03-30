@@ -1,4 +1,4 @@
-const { google } = require('googleapis');
+import { google } from 'googleapis';
 
 const getEnv = (name) => {
   const value = process.env[name];
@@ -27,7 +27,7 @@ const mapRowsToObjects = (values) => {
     );
 };
 
-exports.handler = async () => {
+export const handler = async () => {
   try {
     const spreadsheetId = getEnv('GOOGLE_SPREADSHEET_ID');
     const sheetName = getEnv('GOOGLE_SHEET_NAME');
