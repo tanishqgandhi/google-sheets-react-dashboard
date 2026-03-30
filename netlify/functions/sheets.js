@@ -1,4 +1,6 @@
-import { google } from 'googleapis';
+import googleapis from 'googleapis';
+
+const { google } = googleapis;
 
 const getEnv = (name) => {
   const value = process.env[name];
