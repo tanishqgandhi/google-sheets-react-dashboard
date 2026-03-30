@@ -27,12 +27,20 @@ const mapRowsToObjects = (values) => {
     );
 };
 
+const normalizePrivateKey = (value) =>
+  value
+    .trim()
+    .replace(/^"|"$/g, '')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
+
 export const handler = async () => {
   try {
     const spreadsheetId = getEnv('GOOGLE_SPREADSHEET_ID');
     const sheetName = getEnv('GOOGLE_SHEET_NAME');
     const clientEmail = getEnv('GOOGLE_SERVICE_ACCOUNT_EMAIL');
-    const privateKey = getEnv('GOOGLE_PRIVATE_KEY').replace(/\\n/g, '\n');
+    const privateKey = normalizePrivateKey(getEnv('GOOGLE_PRIVATE_KEY'));
 
     const auth = new google.auth.JWT({
       email: clientEmail,
